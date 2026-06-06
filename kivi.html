@@ -1177,7 +1177,6 @@
           const match = text.match(/GEMINI_API_KEY\s*=\s*(["']?)([^"'\r\n]+)\1/);
           if (match && match[2]) {
             GEMINI_API_KEY = match[2].trim();
-            return GEMINI_API_KEY;
           }
         }
       } catch (e) {
@@ -1185,19 +1184,24 @@
       }
 
       // Try to load from Vercel Serverless Function /api/config
-      try {
-        const res = await fetch('/api/config', { cache: 'no-store' });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.GEMINI_API_KEY) {
-            GEMINI_API_KEY = data.GEMINI_API_KEY.trim();
-            return GEMINI_API_KEY;
+      if (!GEMINI_API_KEY) {
+        try {
+          const res = await fetch('/api/config', { cache: 'no-store' });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.GEMINI_API_KEY) {
+              GEMINI_API_KEY = data.GEMINI_API_KEY.trim();
+            }
           }
+        } catch (e) {
+          // Ignore
         }
-      } catch (e) {
-        // Ignore
       }
-      return '';
+
+      if (GEMINI_API_KEY) {
+        GEMINI_API_KEY = GEMINI_API_KEY.replace(/^["']|["']$/g, '').trim();
+      }
+      return GEMINI_API_KEY;
     }
     const apiKeyPromise = config_loadApiKey();
     const state = {

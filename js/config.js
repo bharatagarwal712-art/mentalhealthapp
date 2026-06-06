@@ -21,7 +21,6 @@ async function config_loadApiKey() {
       if (match && match[2]) {
         GEMINI_API_KEY = match[2].trim();
         console.log("Loaded API key from .env.local");
-        return GEMINI_API_KEY;
       }
     }
   } catch (e) {
@@ -29,34 +28,38 @@ async function config_loadApiKey() {
   }
 
   // 2. Try to load from Vercel Serverless Function /api/config
-  try {
-    const res = await fetch('/api/config', { cache: 'no-store' });
-    if (res.ok) {
-      const data = await res.json();
-      if (data.GEMINI_API_KEY) {
-        GEMINI_API_KEY = data.GEMINI_API_KEY.trim();
-        console.log("Loaded API key from Vercel API");
-        return GEMINI_API_KEY;
+  if (!GEMINI_API_KEY) {
+    try {
+      const res = await fetch('/api/config', { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.GEMINI_API_KEY) {
+          GEMINI_API_KEY = data.GEMINI_API_KEY.trim();
+          console.log("Loaded API key from Vercel API");
+        }
       }
+    } catch (e) {
+      // Ignore and proceed to localStorage fallback
     }
-  } catch (e) {
-    // Ignore and proceed to localStorage fallback
   }
 
   // 3. Try to load from localStorage
-  if (typeof localStorage !== 'undefined') {
+  if (!GEMINI_API_KEY && typeof localStorage !== 'undefined') {
     const _encryptedKey = localStorage.getItem('kivi_api_key');
     if (_encryptedKey && typeof decryptData === 'function') {
       try {
         GEMINI_API_KEY = await decryptData(_encryptedKey);
         console.log("Loaded API key from localStorage");
-        return GEMINI_API_KEY;
       } catch (e) {
         GEMINI_API_KEY = '';
       }
     }
   }
-  return '';
+
+  if (GEMINI_API_KEY) {
+    GEMINI_API_KEY = GEMINI_API_KEY.replace(/^["']|["']$/g, '').trim();
+  }
+  return GEMINI_API_KEY;
 }
 
 // Start loading the API key immediately and expose the promise globally
