@@ -1,4 +1,10 @@
+"use strict";
+
 // --- API ---
+/**
+ * Builds the dynamic system prompt based on user history and current context.
+ * @returns {string} The fully formed system prompt.
+ */
 function api_buildSystemPrompt() {
   const recent = state.sessions.slice(-5);
   const avg = recent.length ? (recent.reduce((a, b) => a + b.mood, 0) / recent.length).toFixed(1) : 0;
@@ -20,9 +26,16 @@ RULES:
 6. Never mention AI, Claude, Gemini, or memory system. You are Kivi, always.`;
 }
 
+/**
+ * Calls the Gemini API with the current session context and handles the response.
+ * @param {boolean} [isOpening=false] - Whether this is the initial opening message of a session.
+ */
 async function api_call(isOpening = false) {
-  if (!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_KEY_HERE') {
-    setTimeout(() => ui_handleApiReply("Kivi needs a valid API key to talk. Please add it to config.js.", isOpening), 1000);
+  if (!GEMINI_API_KEY && window.apiKeyPromise) {
+    await window.apiKeyPromise;
+  }
+  if (!GEMINI_API_KEY) {
+    document.getElementById('settings-modal').hidden = false;
     return;
   }
   try {
@@ -49,6 +62,11 @@ async function api_call(isOpening = false) {
   }
 }
 
+/**
+ * Processes and renders the API reply in the chat UI.
+ * @param {string} reply - The text reply from the API.
+ * @param {boolean} isOpening - Indicates if this is the first message.
+ */
 function ui_handleApiReply(reply, isOpening) {
   ui_hideTyping();
   ui_appendBubble('model', reply);
@@ -61,7 +79,52 @@ function ui_handleApiReply(reply, isOpening) {
   }
 }
 
+/**
+ * Triggers the opening message sequence when a new session begins.
+ */
 function api_sendOpening() {
   ui_showTyping();
   api_call(true);
+}
+
+/**
+ * Fetches a single AI-generated insight about the user's mood patterns for the Timeline screen.
+ */
+async function api_fetchInsight() {
+  if (!GEMINI_API_KEY && window.apiKeyPromise) {
+    await window.apiKeyPromise;
+  }
+  if (!GEMINI_API_KEY) return;
+  const card = document.getElementById('kivi-insight-card');
+  const txt = document.getElementById('kivi-insight-text');
+  if (!card || !txt) return;
+
+  try {
+    const recent = state.sessions.slice(-10);
+    const histTxt = recent.map(s =>
+      `${new Date(s.timestamp).toLocaleDateString([], {weekday:'short', month:'short', day:'numeric'})} - Mood ${s.mood}/5 - ${s.exam}`
+    ).join('\n');
+
+    const prompt = `You are Kivi, a mental wellness companion for Indian exam students.
+Here is a student's recent mood history:\n${histTxt}
+
+Write exactly 1-2 warm, insightful sentences about a pattern you notice (e.g., which day their mood tends to dip, whether mood correlates with a specific exam, or if there is a positive trend). Be specific and empathetic. Reference the exam name when relevant. Do NOT give study advice.`;
+
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        generationConfig: { maxOutputTokens: 150, temperature: 0.7 }
+      })
+    });
+    const data = await res.json();
+    const insight = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (insight) {
+      txt.textContent = insight.trim();
+      card.hidden = false;
+    }
+  } catch (e) {
+    // Silently fail — insight is a bonus feature
+  }
 }

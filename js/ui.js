@@ -1,4 +1,10 @@
+"use strict";
+
 // --- UI-SCREENS ---
+/**
+ * Switches the active tab, utilizing the View Transitions API if available for smooth animation.
+ * @param {string} tab - The ID of the tab to switch to (e.g., 'checkin', 'chat', 'timeline').
+ */
 function ui_switchTab(tab) {
   if (!document.startViewTransition) {
     _performSwitch(tab);
@@ -7,6 +13,10 @@ function ui_switchTab(tab) {
   }
 }
 
+/**
+ * Internal helper to perform the DOM manipulation for tab switching.
+ * @param {string} tab - The target tab ID.
+ */
 function _performSwitch(tab) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(`screen-${tab}`).classList.add('active');
@@ -20,9 +30,13 @@ function _performSwitch(tab) {
   
   if (tab === 'chat') { state.unreadKivi = false; ui_updateChatDot(); }
   if (tab === 'timeline') { ui_renderTimeline(); }
+  if (tab !== 'breathe' && _breatheRunning) { ui_toggleBreathing(); }
   state.activeTab = tab;
 }
 
+/**
+ * Sets the greeting message based on the current time and user profile.
+ */
 function ui_setGreeting() {
   const hr = new Date().getHours();
   let gr = hr < 11 ? "Good morning" : hr < 17 ? "Good afternoon" : hr < 21 ? "Good evening" : "Still up?";
@@ -104,29 +118,15 @@ function ui_hideTyping() {
   document.getElementById('chat-log').setAttribute('aria-busy', 'false');
 }
 
-function ui_renderQuickReplies(mood) {
-  const qr = document.getElementById('quick-replies');
-  qr.innerHTML = '';
-  let opts = [];
-  if (mood <= 2) opts = ["I bombed my mock test", "I want to quit", "Help me breathe"];
-  else if (mood === 3) opts = ["I'm falling behind", "Help me focus today", "I need motivation"];
-  else opts = ["How do I stay consistent?", "Dealing with pressure", "I feel good today"];
-  
-  opts.forEach((txt, i) => {
-    const btn = document.createElement('button');
-    btn.className = 'qr-chip';
-    btn.textContent = txt;
-    btn.style.animationDelay = `${i * 40}ms`;
-    btn.onclick = () => { ui_clearQuickReplies(); ui_triggerSend(txt); };
-    qr.appendChild(btn);
-  });
-}
-
+// Quick replies rendering moved to js/quickReplies.js and attached to window.ui_renderQuickReplies
 function ui_clearQuickReplies() { document.getElementById('quick-replies').innerHTML = ''; }
 function ui_scrollToBottom() { requestAnimationFrame(() => { const l = document.getElementById('chat-log'); l.scrollTop = l.scrollHeight; }); }
 function ui_updateChatDot() { document.getElementById('chat-dot').classList.toggle('visible', state.unreadKivi && state.activeTab !== 'chat'); }
 
 // --- UI-TIMELINE ---
+/**
+ * Renders the timeline screen: graph, stats, insight and history.
+ */
 function ui_renderTimeline() {
   if (!state.sessions.length) return;
   if (!state.graphDrawn) {
@@ -134,6 +134,7 @@ function ui_renderTimeline() {
     ui_renderStatCards(state.sessions);
     ui_renderHistory(state.sessions);
     state.graphDrawn = true;
+    if (state.sessions.length >= 3) api_fetchInsight();
   }
   const svg = document.getElementById('mood-graph');
   svg.classList.remove('graph-drawn');
@@ -178,8 +179,9 @@ function ui_drawGraph(sessions) {
     }
     prevX = x; prevY = y;
     const mCol = `var(--mood-${Math.round(avgM)})`;
-    const tooltipData = `Date: ${b.dateStr}&#10;Exams: ${[...new Set(b.pts.map(p=>p.exam))].join(', ')}&#10;Avg Mood: ${avgM.toFixed(1)}/5`;
-    pointsHTML += `<circle cx="${x}" cy="${y}" r="5" fill="${mCol}" class="data-point" onclick="ui_showTooltip(event, '${tooltipData}')" />`;
+    const sExam = sanitizeHTML(b.pts.map(p=>p.exam).join(', '));
+    const tooltipData = `Date: ${b.dateStr}&#10;Exams: ${sExam}&#10;Avg Mood: ${avgM.toFixed(1)}/5`;
+    pointsHTML += `<circle cx="${x}" cy="${y}" r="5" fill="${mCol}" class="data-point" data-tooltip="${tooltipData}" />`;
   });
   
   const pathEl = `<path d="${pathD}" class="graph-path" id="graph-path-el" />`;
@@ -213,13 +215,17 @@ function ui_renderHistory(sessions) {
   const hl = document.getElementById('history-list');
   hl.innerHTML = '';
   [...sessions].reverse().forEach(s => {
-    const d = new Date(s.timestamp).toLocaleDateString();
-    const kiviMsg = s.messages.find(m => m.role === 'model')?.content || "No reply";
+    const d = sanitizeHTML(new Date(s.timestamp).toLocaleDateString());
+    const kiviMsg = sanitizeHTML(s.messages.find(m => m.role === 'model')?.content || "No reply");
+    const safeExam = sanitizeHTML(s.exam);
+    const safeNote = sanitizeHTML(s.note || 'No note');
+    const fullNote = sanitizeHTML(s.note || 'None');
+    
     hl.innerHTML += `
-      <div class="history-card" aria-expanded="false" onclick="this.setAttribute('aria-expanded', this.getAttribute('aria-expanded')==='true'?'false':'true')">
-        <div class="history-head"><span class="hist-date">${d}</span><span class="hist-chip">${s.exam}</span></div>
-        <div class="hist-main"><span class="hist-emoji">${state.moodEmojis[s.mood]}</span><span class="hist-preview">${s.note || 'No note'}</span></div>
-        <div class="hist-full"><b>Note:</b> ${s.note || 'None'}<div class="hist-kivi"><b>Kivi:</b> ${kiviMsg}</div></div>
+      <div class="history-card" aria-expanded="false">
+        <div class="history-head"><span class="hist-date">${d}</span><span class="hist-chip">${safeExam}</span></div>
+        <div class="hist-main"><span class="hist-emoji">${state.moodEmojis[s.mood]}</span><span class="hist-preview">${safeNote}</span></div>
+        <div class="hist-full"><b>Note:</b> ${fullNote}<div class="hist-kivi"><b>Kivi:</b> ${kiviMsg}</div></div>
       </div>
     `;
   });
@@ -240,6 +246,66 @@ function ui_triggerSend(text) {
 }
 
 function ui_closeSheet() { document.getElementById('context-sheet').classList.remove('visible'); }
+
+/** Opens the crisis helplines bottom sheet. */
+function ui_openCrisisSheet() { document.getElementById('crisis-sheet').classList.add('visible'); }
+
+/** Closes the crisis helplines bottom sheet. */
+function ui_closeCrisisSheet() { document.getElementById('crisis-sheet').classList.remove('visible'); }
+
+// --- BREATHING EXERCISE ---
+let _breatheTimer = null;
+let _breatheRunning = false;
+
+/**
+ * Runs a single 4-7-8 breathing cycle and loops.
+ */
+function _breatheCycle() {
+  const ring = document.getElementById('breathe-ring');
+  const phase = document.getElementById('breathe-phase');
+  const count = document.getElementById('breathe-count');
+
+  const tick = (label, cls, seconds, cb) => {
+    ring.className = `breathe-ring ${cls}`;
+    phase.textContent = label;
+    let s = seconds;
+    count.textContent = s;
+    const interval = setInterval(() => {
+      s--;
+      count.textContent = s > 0 ? s : '';
+      if (s <= 0) { clearInterval(interval); cb(); }
+    }, 1000);
+  };
+
+  if (!_breatheRunning) return;
+  tick('Breathe In', 'inhale', 4, () => {
+    if (!_breatheRunning) return;
+    tick('Hold', 'hold', 7, () => {
+      if (!_breatheRunning) return;
+      tick('Breathe Out', 'exhale', 8, () => {
+        if (_breatheRunning) _breatheCycle();
+      });
+    });
+  });
+}
+
+/**
+ * Toggles the 4-7-8 breathing exercise on or off.
+ */
+function ui_toggleBreathing() {
+  const btn = document.getElementById('breathe-toggle');
+  _breatheRunning = !_breatheRunning;
+  if (_breatheRunning) {
+    btn.textContent = 'Stop';
+    _breatheCycle();
+  } else {
+    btn.textContent = 'Start';
+    const ring = document.getElementById('breathe-ring');
+    ring.className = 'breathe-ring';
+    document.getElementById('breathe-phase').textContent = 'Ready';
+    document.getElementById('breathe-count').textContent = 'Tap to begin';
+  }
+}
 
 function ui_showTooltip(e, text) {
   const tt = document.getElementById('graph-tooltip');

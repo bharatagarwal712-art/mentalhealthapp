@@ -3,34 +3,44 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' data:; connect-src 'self' https://generativelanguage.googleapis.com; font-src https://cdn.jsdelivr.net;">
   <title>Kivi</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
 
-  <div id="setup-banner" hidden>Add your Gemini API key to js/config.js to activate Kivi</div>
+  <div id="settings-modal" role="dialog" aria-modal="true" hidden>
+    <div class="ob-step active">
+      <h2 class="ob-title">API Key Required</h2>
+      <p style="color: var(--kivi-text-muted); max-width: 280px; line-height: 1.5; margin-bottom: 16px;">
+        To keep Kivi secure, we don't hardcode API keys. Please enter your Gemini API key to continue. It will be stored locally on your device.
+      </p>
+      <input type="password" id="api-key-input" class="ob-input" placeholder="AIzaSy...">
+      <button class="ob-btn" id="save-api-key-btn">Save Key</button>
+    </div>
+  </div>
 
   <div id="onboarding" role="dialog" aria-modal="true" hidden>
     <div class="ob-step active" data-step="1">
       <div class="kivi-avatar anim-float">🌿</div>
       <h2 class="ob-title">Hi, I'm Kivi.</h2>
       <p style="color: var(--kivi-text-muted); max-width: 280px; line-height: 1.5;">I'll be with you through every mock test, every doubt, every win.</p>
-      <button class="ob-btn" onclick="ui_nextOnboarding()">Continue</button>
+      <button class="ob-btn ob-next-btn">Continue</button>
     </div>
     <div class="ob-step" data-step="2">
       <h2 class="ob-title">What should I call you?</h2>
       <input type="text" id="ob-name" class="ob-input" maxlength="40" placeholder="Your name">
-      <button class="ob-btn" onclick="ui_nextOnboarding()">Next</button>
-      <button class="ob-skip" onclick="ui_finishOnboarding(true)">Skip</button>
+      <button class="ob-btn ob-next-btn">Next</button>
+      <button class="ob-skip ob-skip-btn">Skip</button>
     </div>
     <div class="ob-step" data-step="3">
       <h2 class="ob-title">Which exam are you preparing for?</h2>
       <div class="exams-row" style="flex-wrap: wrap; justify-content: center; max-width: 300px;" id="ob-exams">
         <!-- populated via js -->
       </div>
-      <button class="ob-btn" onclick="ui_finishOnboarding()">Start Journey</button>
-      <button class="ob-skip" onclick="ui_finishOnboarding(true)">Skip</button>
+      <button class="ob-btn" id="ob-btn-start">Start Journey</button>
+      <button class="ob-skip ob-skip-btn">Skip</button>
     </div>
     <div class="ob-dots">
       <div class="ob-dot active"></div><div class="ob-dot"></div><div class="ob-dot"></div>
@@ -44,6 +54,7 @@
       <section id="screen-checkin" class="screen active">
         <div class="container">
           <p class="greeting" id="greeting">Good day</p>
+          <h2 class="checkin-subtitle" style="font-size: 20px; font-weight: 600; margin-top: 4px; margin-bottom: 24px; color: var(--kivi-text);">How is your prep going today?</h2>
           <div class="avatar-wrap">
             <div class="kivi-avatar anim-float" aria-hidden="true">🌿</div>
           </div>
@@ -55,11 +66,11 @@
             <button class="mood-btn" data-val="4" aria-label="Mood 4 out of 5: Feeling Good">🙂</button>
             <button class="mood-btn" data-val="5" aria-label="Mood 5 out of 5: Feeling Great">😊</button>
           </div>
-          <p class="mood-label" id="mood-label">&nbsp;</p>
+                <p class="mood-label" id="mood-label">Select your mood</p>
           
           <!-- Exam selection moved to onboarding only -->
           
-          <textarea class="note-input" id="checkin-note" maxlength="500" placeholder="What's on your mind? (optional)"></textarea>
+                <textarea class="note-input" id="checkin-note" maxlength="500" placeholder="Anything on your mind? (optional)" aria-label="Optional note about your study day"></textarea>
           
           <button class="summon-btn" id="summon-btn" disabled>✨ Summon Kivi</button>
           <button id="reset-app-btn" class="ob-skip" style="margin: 12px auto 0; display: block;">Log out</button>
@@ -76,6 +87,12 @@
         
         <div class="chat-log" id="chat-log" role="log" aria-live="polite"></div>
         <div class="quick-replies" id="quick-replies"></div>
+        
+        <div class="crisis-link-bar">
+          <button class="crisis-link" id="crisis-link-btn" aria-label="Open mental health helplines">
+            <i class="ti ti-heart-handshake"></i> Need immediate help?
+          </button>
+        </div>
         
         <div class="chat-input-bar">
           <textarea class="chat-input" id="chat-input" placeholder="Type a message..." rows="1"></textarea>
@@ -95,19 +112,45 @@
         </div>
         
         <div class="stats-row" id="stats-row"></div>
+        <div id="kivi-insight-card" hidden>
+          <div class="insight-card">
+            <span class="insight-icon">🌿</span>
+            <p id="kivi-insight-text"></p>
+          </div>
+        </div>
         <div class="history-list" id="history-list"></div>
+      </section>
+
+      <section id="screen-breathe" class="screen">
+        <header class="timeline-header">
+          <h2 class="timeline-title">Take a breath</h2>
+          <p class="timeline-sub">4-7-8 technique for exam stress</p>
+        </header>
+        <div class="breathe-container">
+          <div class="breathe-ring" id="breathe-ring" aria-live="polite" aria-label="Breathing exercise">
+            <div class="breathe-inner">
+              <p class="breathe-phase" id="breathe-phase">Ready</p>
+              <p class="breathe-count" id="breathe-count">Tap to begin</p>
+            </div>
+          </div>
+          <p class="breathe-tip">Breathe in 4 · Hold 7 · Out 8</p>
+          <button class="ob-btn" id="breathe-toggle" style="margin-top:24px">Start</button>
+        </div>
       </section>
     </main>
 
     <nav id="bottom-nav" aria-label="Main navigation">
-      <button class="nav-btn active" data-tab="checkin" aria-current="page">
+            <button class="nav-btn active" data-tab="checkin" aria-current="page" aria-label="Current screen: Check‑in">
         <i class="ti ti-home"></i><span>Check-in</span>
       </button>
-      <button class="nav-btn" data-tab="chat">
+      <button class="nav-btn" data-tab="chat" aria-label="Go to Chat screen">
         <i class="ti ti-message-circle"></i><span>Chat</span>
         <div class="chat-dot" id="chat-dot"></div>
       </button>
-      <button class="nav-btn" data-tab="timeline">
+      <button class="nav-btn" data-tab="breathe" aria-label="Go to Breathing exercise">
+        <i class="ti ti-wind"></i><span>Breathe</span>
+      </button>
+      <button class="nav-btn" data-tab="timeline" aria-label="Go to Timeline history">
         <i class="ti ti-chart-line"></i><span>Timeline</span>
       </button>
     </nav>
@@ -115,7 +158,7 @@
 
   <div id="context-sheet">
     <div class="sheet-content">
-      <i class="ti ti-x sheet-close" onclick="ui_closeSheet()"></i>
+      <i class="ti ti-x sheet-close" id="context-sheet-close"></i>
       <h3 style="margin-bottom:16px">Session Context</h3>
       <p style="margin-bottom:8px" id="sheet-mood"></p>
       <p style="margin-bottom:8px" id="sheet-exam"></p>
@@ -123,10 +166,36 @@
     </div>
   </div>
 
-  <script src="js/config.js"></script>
-  <script src="js/store.js"></script>
-  <script src="js/api.js"></script>
-  <script src="js/ui.js"></script>
-  <script src="js/app.js"></script>
+  <div id="crisis-sheet">
+    <div class="sheet-content">
+      <i class="ti ti-x sheet-close" id="crisis-sheet-close"></i>
+      <h3 style="margin-bottom:4px">You are not alone 💙</h3>
+      <p style="color:var(--kivi-text-muted); font-size:13px; margin-bottom:20px">Reach out to a trained counsellor right now:</p>
+      <a class="crisis-card" href="tel:9152987821">
+        <div class="crisis-name">iCall</div>
+        <div class="crisis-num">9152987821</div>
+        <div class="crisis-desc">TISS-backed psychological support</div>
+      </a>
+      <a class="crisis-card" href="tel:18602662345">
+        <div class="crisis-name">Vandrevala Foundation</div>
+        <div class="crisis-num">1860-2662-345</div>
+        <div class="crisis-desc">Free, 24×7, available in Hindi & English</div>
+      </a>
+      <a class="crisis-card" href="tel:08046110007">
+        <div class="crisis-name">NIMHANS</div>
+        <div class="crisis-num">080-46110007</div>
+        <div class="crisis-desc">National mental health helpline</div>
+      </a>
+      <p style="font-size:12px; color:var(--kivi-text-muted); text-align:center; margin-top:16px">If you are in immediate danger, please call 112.</p>
+    </div>
+  </div>
+
+  <script src="js/crypto.js?v=1.0.1"></script>
+  <script src="js/config.js?v=1.0.1"></script>
+  <script src="js/store.js?v=1.0.1"></script>
+  <script src="js/api.js?v=1.0.1"></script>
+  <script src="js/quickReplies.js?v=1.0.1"></script>
+  <script src="js/ui.js?v=1.0.1"></script>
+  <script src="js/app.js?v=1.0.1"></script>
 </body>
 </html>

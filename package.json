@@ -1,0 +1,33 @@
+{
+  "name": "mentalhealthapp",
+  "version": "1.0.0",
+  "description": "Kivi is an emotionally intelligent, AI-powered mental wellness app designed specifically for Indian students preparing for high-pressure competitive exams (JEE, NEET, UPSC, CAT, etc.). It acts as a companion that understands the unique pressures of the exam cycle and offers timely, context-aware mental wellness support.",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "test:ui": "playwright test tests/ui.test.js"
+  },
+  "jest": {
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "ui\\.test\\.js$"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bharatagarwal712-art/mentalhealthapp.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/bharatagarwal712-art/mentalhealthapp/issues"
+  },
+  "homepage": "https://github.com/bharatagarwal712-art/mentalhealthapp#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "jest": "^30.4.2",
+    "jest-environment-jsdom": "^30.4.1"
+  }
+}
