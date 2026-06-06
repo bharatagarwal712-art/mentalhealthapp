@@ -7,7 +7,11 @@ const { chromium } = require('playwright');
   page.on('console', msg => console.log('BROWSER_CONSOLE:', msg.type(), msg.text()));
   page.on('pageerror', err => console.log('BROWSER_ERROR:', err.message));
   
-  await page.goto('http://localhost:62147'); // wait, the user's dev server is on port 62147? Oh wait, tests/ui.test.js says 62147. We will try 62147.
+  await page.goto('http://localhost:8080/');
+  await page.waitForTimeout(2000);
+  
+  const key = await page.evaluate(() => GEMINI_API_KEY);
+  console.log('EVALUATED_GEMINI_API_KEY:', key);
   
   await browser.close();
 })();
