@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Kivi</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <div id="setup-banner" hidden>Add your Gemini API key to js/config.js to activate Kivi</div>
+
+  <div id="onboarding" role="dialog" aria-modal="true" hidden>
+    <div class="ob-step active" data-step="1">
+      <div class="kivi-avatar anim-float">🌿</div>
+      <h2 class="ob-title">Hi, I'm Kivi.</h2>
+      <p style="color: var(--kivi-text-muted); max-width: 280px; line-height: 1.5;">I'll be with you through every mock test, every doubt, every win.</p>
+      <button class="ob-btn" onclick="ui_nextOnboarding()">Continue</button>
+    </div>
+    <div class="ob-step" data-step="2">
+      <h2 class="ob-title">What should I call you?</h2>
+      <input type="text" id="ob-name" class="ob-input" maxlength="40" placeholder="Your name">
+      <button class="ob-btn" onclick="ui_nextOnboarding()">Next</button>
+      <button class="ob-skip" onclick="ui_finishOnboarding(true)">Skip</button>
+    </div>
+    <div class="ob-step" data-step="3">
+      <h2 class="ob-title">Which exam are you preparing for?</h2>
+      <div class="exams-row" style="flex-wrap: wrap; justify-content: center; max-width: 300px;" id="ob-exams">
+        <!-- populated via js -->
+      </div>
+      <button class="ob-btn" onclick="ui_finishOnboarding()">Start Journey</button>
+      <button class="ob-skip" onclick="ui_finishOnboarding(true)">Skip</button>
+    </div>
+    <div class="ob-dots">
+      <div class="ob-dot active"></div><div class="ob-dot"></div><div class="ob-dot"></div>
+    </div>
+  </div>
+
+  <div id="app" hidden>
+    <main id="screens">
+      <div class="checkin-bg" id="checkin-bg"></div>
+      
+      <section id="screen-checkin" class="screen active">
+        <div class="container">
+          <p class="greeting" id="greeting">Good day</p>
+          <div class="avatar-wrap">
+            <div class="kivi-avatar anim-float" aria-hidden="true">🌿</div>
+          </div>
+          
+          <div class="mood-row" role="radiogroup" aria-label="How are you feeling?">
+            <button class="mood-btn" data-val="1" aria-label="Mood 1 out of 5: Feeling Terrible">😔</button>
+            <button class="mood-btn" data-val="2" aria-label="Mood 2 out of 5: Feeling Low">😟</button>
+            <button class="mood-btn" data-val="3" aria-label="Mood 3 out of 5: Feeling Okay">😐</button>
+            <button class="mood-btn" data-val="4" aria-label="Mood 4 out of 5: Feeling Good">🙂</button>
+            <button class="mood-btn" data-val="5" aria-label="Mood 5 out of 5: Feeling Great">😊</button>
+          </div>
+          <p class="mood-label" id="mood-label">&nbsp;</p>
+          
+          <!-- Exam selection moved to onboarding only -->
+          
+          <textarea class="note-input" id="checkin-note" maxlength="500" placeholder="What's on your mind? (optional)"></textarea>
+          
+          <button class="summon-btn" id="summon-btn" disabled>✨ Summon Kivi</button>
+          <button id="reset-app-btn" class="ob-skip" style="margin: 12px auto 0; display: block;">Log out</button>
+        </div>
+      </section>
+
+      <section id="screen-chat" class="screen">
+        <header class="chat-header">
+          <div class="chat-title"><span style="font-size:20px">🌿</span> Kivi</div>
+          <button class="context-pill" id="chat-context-pill">
+            <span id="pill-emoji"></span> <span id="pill-exam"></span>
+          </button>
+        </header>
+        
+        <div class="chat-log" id="chat-log" role="log" aria-live="polite"></div>
+        <div class="quick-replies" id="quick-replies"></div>
+        
+        <div class="chat-input-bar">
+          <textarea class="chat-input" id="chat-input" placeholder="Type a message..." rows="1"></textarea>
+          <button class="send-btn" id="send-btn"><i class="ti ti-send"></i></button>
+        </div>
+      </section>
+
+      <section id="screen-timeline" class="screen">
+        <header class="timeline-header">
+          <h2 class="timeline-title">Your mood journey</h2>
+          <p class="timeline-sub">Last 14 days</p>
+        </header>
+        
+        <div class="graph-container">
+          <svg class="graph-svg" id="mood-graph" role="img"></svg>
+          <div id="graph-tooltip" class="tooltip"></div>
+        </div>
+        
+        <div class="stats-row" id="stats-row"></div>
+        <div class="history-list" id="history-list"></div>
+      </section>
+    </main>
+
+    <nav id="bottom-nav" aria-label="Main navigation">
+      <button class="nav-btn active" data-tab="checkin" aria-current="page">
+        <i class="ti ti-home"></i><span>Check-in</span>
+      </button>
+      <button class="nav-btn" data-tab="chat">
+        <i class="ti ti-message-circle"></i><span>Chat</span>
+        <div class="chat-dot" id="chat-dot"></div>
+      </button>
+      <button class="nav-btn" data-tab="timeline">
+        <i class="ti ti-chart-line"></i><span>Timeline</span>
+      </button>
+    </nav>
+  </div>
+
+  <div id="context-sheet">
+    <div class="sheet-content">
+      <i class="ti ti-x sheet-close" onclick="ui_closeSheet()"></i>
+      <h3 style="margin-bottom:16px">Session Context</h3>
+      <p style="margin-bottom:8px" id="sheet-mood"></p>
+      <p style="margin-bottom:8px" id="sheet-exam"></p>
+      <p style="color:var(--kivi-text-muted); font-size:14px" id="sheet-note"></p>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

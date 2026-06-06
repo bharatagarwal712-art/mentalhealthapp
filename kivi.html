@@ -1,0 +1,1618 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Kivi</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <style>
+    /* 1-RESET */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      overflow: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button {
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font: inherit;
+    }
+
+    input,
+    textarea {
+      font: inherit;
+      border: none;
+      outline: none;
+    }
+
+    /* 2-DESIGN TOKENS */
+    :root {
+      --kivi-primary: #5B8C5A;
+      --kivi-primary-light: #EAF4E9;
+      --kivi-primary-mid: #A8CBA7;
+      --kivi-accent: #F4845F;
+      --kivi-accent-light: #FEF0EB;
+      --kivi-sky: #6BAED6;
+      --kivi-sky-light: #EBF5FB;
+      --kivi-sun: #F9C74F;
+      --kivi-sun-light: #FFFBEB;
+      --kivi-lavender: #9B89C4;
+      --kivi-lavender-light: #F3F0FB;
+      --kivi-bg: #F8FAF7;
+      --kivi-surface: #FFFFFF;
+      --kivi-text: #2D3A2E;
+      --kivi-text-muted: #7A8C7B;
+      --kivi-border: rgba(91, 140, 90, 0.15);
+      --mood-1: #E07A7A;
+      --mood-2: #F4A261;
+      --mood-3: #F9C74F;
+      --mood-4: #90BE6D;
+      --mood-5: #43AA8B;
+    }
+
+    /* 3-ANIMATION KEYFRAMES */
+    @media (prefers-reduced-motion: no-preference) {
+      @keyframes float {
+
+        0%,
+        100% {
+          transform: translateY(0px);
+        }
+
+        50% {
+          transform: translateY(-8px);
+        }
+      }
+
+      @keyframes pulse-ring {
+        0% {
+          transform: scale(1);
+          opacity: 0.6;
+        }
+
+        100% {
+          transform: scale(1.6);
+          opacity: 0;
+        }
+      }
+
+      @keyframes slide-up {
+        from {
+          opacity: 0;
+          transform: translateY(16px);
+        }
+
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes fade-in {
+        from {
+          opacity: 0;
+        }
+
+        to {
+          opacity: 1;
+        }
+      }
+
+      @keyframes pop {
+        0% {
+          transform: scale(0.85);
+          opacity: 0;
+        }
+
+        70% {
+          transform: scale(1.05);
+        }
+
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+
+      @keyframes shimmer {
+        0% {
+          background-position: -200% center;
+        }
+
+        100% {
+          background-position: 200% center;
+        }
+      }
+
+      @keyframes bounce-dot {
+
+        0%,
+        80%,
+        100% {
+          transform: scale(0.6);
+          opacity: 0.4;
+        }
+
+        40% {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+
+      @keyframes draw-line {
+        from {
+          stroke-dashoffset: var(--path-length, 1000);
+        }
+
+        to {
+          stroke-dashoffset: 0;
+        }
+      }
+
+      @keyframes mood-burst {
+        0% {
+          transform: scale(1);
+        }
+
+        30% {
+          transform: scale(1.4);
+        }
+
+        60% {
+          transform: scale(0.95);
+        }
+
+        100% {
+          transform: scale(1.1);
+        }
+      }
+
+      .anim-float {
+        animation: float 3s ease-in-out infinite;
+      }
+
+      .anim-slide-up {
+        animation: slide-up 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+      }
+
+      .anim-fade-in {
+        animation: fade-in 0.3s ease forwards;
+      }
+
+      .anim-pop {
+        animation: pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      }
+
+      .anim-burst {
+        animation: mood-burst 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      }
+
+      .anim-draw {
+        animation: draw-line 1.2s ease-out forwards;
+      }
+    }
+
+    /* 4-BASE LAYOUT */
+    body {
+      background-color: var(--kivi-bg);
+      color: var(--kivi-text);
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+    }
+
+    #app {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    #screens {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .screen {
+      position: absolute;
+      inset: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding-bottom: 24px;
+      display: none;
+      flex-direction: column;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* 5-BOTTOM NAV */
+    #bottom-nav {
+      background: var(--kivi-surface);
+      border-top: 0.5px solid var(--kivi-border);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 12px 16px env(safe-area-inset-bottom, 16px);
+      position: relative;
+      z-index: 100;
+    }
+
+    .nav-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      color: var(--kivi-text-muted);
+      min-width: 64px;
+      position: relative;
+    }
+
+    .nav-btn i {
+      font-size: 24px;
+      transition: color 0.2s;
+    }
+
+    .nav-btn span {
+      font-size: 11px;
+      font-weight: 500;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .nav-btn.active {
+      color: var(--kivi-primary);
+    }
+
+    .nav-btn.active span {
+      opacity: 1;
+    }
+
+    .nav-btn.active i {
+      animation: pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .chat-dot {
+      position: absolute;
+      top: 0;
+      right: 20px;
+      width: 8px;
+      height: 8px;
+      background: var(--kivi-primary);
+      border-radius: 50%;
+      border: 2px solid var(--kivi-surface);
+      display: none;
+    }
+
+    .chat-dot.visible {
+      display: block;
+    }
+
+    /* 6-SCREEN CHECK-IN */
+    .checkin-bg {
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      transition: background-color 0.4s ease;
+    }
+
+    #screen-checkin .container {
+      flex: 1;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      max-width: 375px;
+    }
+
+    .greeting {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--kivi-text);
+    }
+
+    .avatar-wrap {
+      position: relative;
+      margin: 16px 0 24px;
+    }
+
+    .kivi-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: var(--kivi-primary-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+    }
+
+    .mood-row {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 8px;
+      width: 100%;
+    }
+
+    .mood-btn {
+      width: 44px;
+      height: 44px;
+      font-size: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: transform 0.2s;
+      position: relative;
+    }
+
+    .mood-btn::after {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      transition: border-color 0.2s;
+    }
+
+    .mood-btn.selected {
+      transform: scale(1.3);
+      z-index: 2;
+    }
+
+    .mood-btn[data-val="1"].selected::after {
+      border-color: var(--mood-1);
+    }
+
+    .mood-btn[data-val="2"].selected::after {
+      border-color: var(--mood-2);
+    }
+
+    .mood-btn[data-val="3"].selected::after {
+      border-color: var(--mood-3);
+    }
+
+    .mood-btn[data-val="4"].selected::after {
+      border-color: var(--mood-4);
+    }
+
+    .mood-btn[data-val="5"].selected::after {
+      border-color: var(--mood-5);
+    }
+
+    .mood-label {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--kivi-text-muted);
+      min-height: 20px;
+      margin-bottom: 16px;
+      transition: color 0.3s;
+    }
+
+    .exams-scroll {
+      width: 100%;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      scrollbar-width: none;
+    }
+
+    .exams-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    .exams-row {
+      display: flex;
+      gap: 8px;
+      padding: 4px;
+      width: max-content;
+      margin: 0 auto;
+    }
+
+    .exam-chip {
+      padding: 8px 16px;
+      border-radius: 20px;
+      border: 0.5px solid var(--kivi-border);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--kivi-text-muted);
+      background: var(--kivi-surface);
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .exam-chip.selected {
+      background: var(--kivi-primary-light);
+      border-color: var(--kivi-primary);
+      color: var(--kivi-primary);
+      animation: pop 0.3s ease forwards;
+    }
+
+    .note-input {
+      width: 100%;
+      min-height: 80px;
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: 0.5px solid var(--kivi-border);
+      background: var(--kivi-surface);
+      color: var(--kivi-text);
+      resize: none;
+      margin-bottom: 16px;
+    }
+
+    .note-input::placeholder {
+      color: var(--kivi-text-muted);
+      opacity: 0.7;
+    }
+
+    .summon-btn {
+      width: 100%;
+      padding: 16px;
+      border-radius: 24px;
+      background: var(--kivi-primary);
+      color: white;
+      font-weight: 600;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .summon-btn:disabled {
+      background: var(--kivi-text-muted);
+      opacity: 0.5;
+    }
+
+    .summon-btn:disabled::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      background-size: 200% 100%;
+      animation: shimmer 2s infinite linear;
+    }
+
+    .summon-btn:not(:disabled) {
+      box-shadow: 0 4px 12px rgba(91, 140, 90, 0.3);
+    }
+
+    /* 7-SCREEN CHAT */
+    #screen-chat {
+      padding-bottom: 0;
+    }
+
+    .chat-header {
+      background: var(--kivi-surface);
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 0.5px solid var(--kivi-border);
+      z-index: 10;
+      position: sticky;
+      top: 0;
+    }
+
+    .chat-title {
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .context-pill {
+      background: var(--kivi-bg);
+      border: 0.5px solid var(--kivi-border);
+      padding: 4px 12px;
+      border-radius: 16px;
+      font-size: 12px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .chat-log {
+      flex: 1;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      overflow-y: auto;
+      scroll-behavior: smooth;
+    }
+
+    .bubble-wrap {
+      display: flex;
+      flex-direction: column;
+      max-width: 85%;
+      position: relative;
+    }
+
+    .bubble-wrap.kivi {
+      align-self: flex-start;
+    }
+
+    .bubble-wrap.user {
+      align-self: flex-end;
+      align-items: flex-end;
+    }
+
+    .bubble {
+      padding: 12px 16px;
+      font-size: 15px;
+      line-height: 1.4;
+      position: relative;
+    }
+
+    .bubble-wrap.kivi .bubble {
+      background: var(--kivi-primary-light);
+      color: var(--kivi-text);
+      border-radius: 4px 16px 16px 16px;
+    }
+
+    .bubble-wrap.user .bubble {
+      background: var(--kivi-accent-light);
+      color: var(--kivi-text);
+      border-radius: 16px 4px 16px 16px;
+    }
+
+    .bubble-time {
+      font-size: 11px;
+      color: var(--kivi-text-muted);
+      margin-top: 4px;
+      opacity: 0;
+      transition: opacity 0.2s;
+      height: 0;
+      overflow: hidden;
+    }
+
+    .bubble-wrap:hover .bubble-time,
+    .bubble-wrap:active .bubble-time {
+      opacity: 1;
+      height: auto;
+      margin-top: 4px;
+    }
+
+    .typing-dots {
+      display: flex;
+      gap: 4px;
+      padding: 8px 4px;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--kivi-primary);
+      animation: bounce-dot 1.4s infinite ease-in-out both;
+    }
+
+    .dot:nth-child(1) {
+      animation-delay: -0.32s;
+    }
+
+    .dot:nth-child(2) {
+      animation-delay: -0.16s;
+    }
+
+    .quick-replies {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 0 16px 12px;
+      justify-content: flex-end;
+    }
+
+    .qr-chip {
+      background: var(--kivi-lavender-light);
+      border: 1px solid var(--kivi-lavender);
+      color: var(--kivi-lavender);
+      padding: 8px 14px;
+      border-radius: 16px;
+      font-size: 13px;
+      font-weight: 500;
+      animation: slide-up 0.3s forwards;
+      opacity: 0;
+    }
+
+    .chat-input-bar {
+      background: var(--kivi-surface);
+      border-top: 0.5px solid var(--kivi-border);
+      padding: 12px 16px env(safe-area-inset-bottom, 12px);
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+    }
+
+    .chat-input {
+      flex: 1;
+      background: var(--kivi-bg);
+      border: 0.5px solid var(--kivi-border);
+      border-radius: 20px;
+      padding: 12px 16px;
+      font-size: 15px;
+      max-height: 120px;
+      min-height: 44px;
+      resize: none;
+      overflow-y: auto;
+    }
+
+    .send-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--kivi-primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.2s;
+    }
+
+    .send-btn:disabled {
+      background: var(--kivi-text-muted);
+    }
+
+    /* 8-SCREEN TIMELINE */
+    #screen-timeline {
+      background: var(--kivi-surface);
+    }
+
+    .timeline-header {
+      padding: 24px 16px 16px;
+      text-align: center;
+    }
+
+    .timeline-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--kivi-text);
+    }
+
+    .timeline-sub {
+      font-size: 13px;
+      color: var(--kivi-text-muted);
+      margin-top: 4px;
+    }
+
+    .graph-container {
+      width: 100%;
+      height: 180px;
+      padding: 0 16px;
+      position: relative;
+      margin-bottom: 24px;
+    }
+
+    .graph-svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    .graph-path {
+      fill: none;
+      stroke: var(--kivi-primary-mid);
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .graph-fill {
+      opacity: 0;
+      transition: opacity 0.5s 0.5s;
+    }
+
+    .graph-drawn .graph-fill {
+      opacity: 1;
+    }
+
+    .data-point {
+      opacity: 0;
+      transform-origin: center;
+      cursor: pointer;
+    }
+
+    .graph-drawn .data-point {
+      animation: pop 0.4s forwards;
+    }
+
+    .graph-axis-text {
+      font-size: 10px;
+      fill: var(--kivi-text-muted);
+      font-family: inherit;
+    }
+
+    .stats-row {
+      display: flex;
+      gap: 12px;
+      padding: 0 16px;
+      margin-bottom: 24px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .stat-card {
+      background: var(--kivi-bg);
+      border-radius: 12px;
+      padding: 12px;
+      min-width: 100px;
+      flex: 1;
+      text-align: center;
+    }
+
+    .stat-val {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--kivi-text);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--kivi-text-muted);
+      font-weight: 500;
+    }
+
+    .history-list {
+      padding: 0 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .history-card {
+      background: var(--kivi-surface);
+      border: 0.5px solid var(--kivi-border);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: left;
+      transition: background 0.2s;
+    }
+
+    .history-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .hist-date {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--kivi-text-muted);
+    }
+
+    .hist-chip {
+      font-size: 10px;
+      background: var(--kivi-bg);
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    .hist-main {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .hist-emoji {
+      font-size: 24px;
+    }
+
+    .hist-preview {
+      font-size: 14px;
+      color: var(--kivi-text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 1;
+    }
+
+    .hist-full {
+      display: none;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 0.5px solid var(--kivi-border);
+      font-size: 14px;
+      color: var(--kivi-text);
+      line-height: 1.5;
+    }
+
+    .hist-kivi {
+      background: var(--kivi-primary-light);
+      padding: 10px;
+      border-radius: 8px;
+      margin-top: 8px;
+      font-size: 13px;
+    }
+
+    .history-card[aria-expanded="true"] .hist-preview {
+      white-space: normal;
+      overflow: visible;
+      text-overflow: clip;
+    }
+
+    .history-card[aria-expanded="true"] .hist-full {
+      display: block;
+      animation: fade-in 0.3s;
+    }
+
+    /* 9-COMPONENTS */
+    #onboarding {
+      position: fixed;
+      inset: 0;
+      background: var(--kivi-surface);
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      padding: 24px 16px;
+    }
+
+    .ob-step {
+      flex: 1;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .ob-step.active {
+      display: flex;
+      animation: slide-up 0.4s forwards;
+    }
+
+    .ob-title {
+      font-size: 24px;
+      font-weight: 600;
+      margin: 24px 0 16px;
+    }
+
+    .ob-input {
+      width: 100%;
+      border-bottom: 2px solid var(--kivi-primary);
+      font-size: 24px;
+      text-align: center;
+      padding: 8px;
+      border-radius: 0;
+      background: transparent;
+    }
+
+    .ob-btn {
+      background: var(--kivi-primary);
+      color: white;
+      padding: 16px 32px;
+      border-radius: 24px;
+      font-size: 16px;
+      font-weight: 600;
+      margin-top: 32px;
+    }
+
+    .ob-skip {
+      color: var(--kivi-text-muted);
+      margin-top: 16px;
+      font-size: 14px;
+      text-decoration: underline;
+    }
+
+    .ob-dots {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: auto;
+      padding-bottom: 24px;
+    }
+
+    .ob-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--kivi-border);
+    }
+
+    .ob-dot.active {
+      background: var(--kivi-primary);
+    }
+
+    #setup-banner {
+      background: var(--mood-2);
+      color: white;
+      padding: 12px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 500;
+      z-index: 2000;
+    }
+
+    #context-sheet {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      z-index: 500;
+      display: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    #context-sheet.visible {
+      display: flex;
+      opacity: 1;
+      align-items: flex-end;
+    }
+
+    .sheet-content {
+      background: var(--kivi-surface);
+      width: 100%;
+      border-radius: 20px 20px 0 0;
+      padding: 24px;
+      transform: translateY(100%);
+      transition: transform 0.3s;
+    }
+
+    #context-sheet.visible .sheet-content {
+      transform: translateY(0);
+    }
+
+    .sheet-close {
+      float: right;
+      font-size: 24px;
+      color: var(--kivi-text-muted);
+    }
+
+    .tooltip {
+      position: absolute;
+      background: var(--kivi-text);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+      z-index: 50;
+      max-width: 200px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .tooltip.visible {
+      opacity: 1;
+    }
+
+    /* 10-UTILITIES */
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      border: 0;
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--kivi-primary);
+      outline-offset: 2px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="setup-banner" hidden>Add your Gemini API key to kivi.html to activate Kivi</div>
+
+  <div id="onboarding" role="dialog" aria-modal="true" hidden>
+    <div class="ob-step active" data-step="1">
+      <div class="kivi-avatar anim-float">🌿</div>
+      <h2 class="ob-title">Hi, I'm Kivi.</h2>
+      <p style="color: var(--kivi-text-muted); max-width: 280px; line-height: 1.5;">I'll be with you through every mock
+        test, every doubt, every win.</p>
+      <button class="ob-btn" onclick="ui_nextOnboarding()">Continue</button>
+    </div>
+    <div class="ob-step" data-step="2">
+      <h2 class="ob-title">What should I call you?</h2>
+      <input type="text" id="ob-name" class="ob-input" maxlength="40" placeholder="Your name">
+      <button class="ob-btn" onclick="ui_nextOnboarding()">Next</button>
+      <button class="ob-skip" onclick="ui_finishOnboarding(true)">Skip</button>
+    </div>
+    <div class="ob-step" data-step="3">
+      <h2 class="ob-title">Which exam are you preparing for?</h2>
+      <div class="exams-row" style="flex-wrap: wrap; justify-content: center; max-width: 300px;" id="ob-exams">
+        <!-- populated via js -->
+      </div>
+      <button class="ob-btn" onclick="ui_finishOnboarding()">Start Journey</button>
+      <button class="ob-skip" onclick="ui_finishOnboarding(true)">Skip</button>
+    </div>
+    <div class="ob-dots">
+      <div class="ob-dot active"></div>
+      <div class="ob-dot"></div>
+      <div class="ob-dot"></div>
+    </div>
+  </div>
+
+  <div id="app" hidden>
+    <main id="screens">
+      <div class="checkin-bg" id="checkin-bg"></div>
+
+      <section id="screen-checkin" class="screen active">
+        <div class="container">
+          <p class="greeting" id="greeting">Good day</p>
+          <div class="avatar-wrap">
+            <div class="kivi-avatar anim-float" aria-hidden="true">🌿</div>
+          </div>
+
+          <div class="mood-row" role="radiogroup" aria-label="How are you feeling?">
+            <button class="mood-btn" data-val="1" aria-label="Mood 1 out of 5: Feeling Terrible">😔</button>
+            <button class="mood-btn" data-val="2" aria-label="Mood 2 out of 5: Feeling Low">😟</button>
+            <button class="mood-btn" data-val="3" aria-label="Mood 3 out of 5: Feeling Okay">😐</button>
+            <button class="mood-btn" data-val="4" aria-label="Mood 4 out of 5: Feeling Good">🙂</button>
+            <button class="mood-btn" data-val="5" aria-label="Mood 5 out of 5: Feeling Great">😊</button>
+          </div>
+          <p class="mood-label" id="mood-label">&nbsp;</p>
+
+          <div class="exams-scroll">
+            <div class="exams-row" role="radiogroup" aria-label="Which exam?" id="checkin-exams">
+              <button class="exam-chip" role="radio" aria-checked="false" data-val="JEE">JEE</button>
+              <button class="exam-chip" role="radio" aria-checked="false" data-val="NEET">NEET</button>
+              <button class="exam-chip" role="radio" aria-checked="false" data-val="UPSC">UPSC</button>
+              <button class="exam-chip" role="radio" aria-checked="false" data-val="CAT">CAT</button>
+              <button class="exam-chip" role="radio" aria-checked="false" data-val="GATE">GATE</button>
+              <button class="exam-chip" role="radio" aria-checked="false" data-val="CUET">CUET</button>
+              <button class="exam-chip" role="radio" aria-checked="false" data-val="Board exams">Board exams</button>
+            </div>
+          </div>
+
+          <textarea class="note-input" id="checkin-note" maxlength="500"
+            placeholder="What's on your mind? (optional)"></textarea>
+
+          <button class="summon-btn" id="summon-btn" disabled>✨ Summon Kivi</button>
+        </div>
+      </section>
+
+      <section id="screen-chat" class="screen">
+        <header class="chat-header">
+          <div class="chat-title"><span style="font-size:20px">🌿</span> Kivi</div>
+          <button class="context-pill" id="chat-context-pill">
+            <span id="pill-emoji"></span> <span id="pill-exam"></span>
+          </button>
+        </header>
+
+        <div class="chat-log" id="chat-log" role="log" aria-live="polite"></div>
+        <div class="quick-replies" id="quick-replies"></div>
+
+        <div class="chat-input-bar">
+          <textarea class="chat-input" id="chat-input" placeholder="Type a message..." rows="1"></textarea>
+          <button class="send-btn" id="send-btn"><i class="ti ti-send"></i></button>
+        </div>
+      </section>
+
+      <section id="screen-timeline" class="screen">
+        <header class="timeline-header">
+          <h2 class="timeline-title">Your mood journey</h2>
+          <p class="timeline-sub">Last 14 days</p>
+        </header>
+
+        <div class="graph-container">
+          <svg class="graph-svg" id="mood-graph" role="img"></svg>
+          <div id="graph-tooltip" class="tooltip"></div>
+        </div>
+
+        <div class="stats-row" id="stats-row"></div>
+        <div class="history-list" id="history-list"></div>
+      </section>
+    </main>
+
+    <nav id="bottom-nav" aria-label="Main navigation">
+      <button class="nav-btn active" data-tab="checkin" aria-current="page">
+        <i class="ti ti-home"></i><span>Check-in</span>
+      </button>
+      <button class="nav-btn" data-tab="chat">
+        <i class="ti ti-message-circle"></i><span>Chat</span>
+        <div class="chat-dot" id="chat-dot"></div>
+      </button>
+      <button class="nav-btn" data-tab="timeline">
+        <i class="ti ti-chart-line"></i><span>Timeline</span>
+      </button>
+    </nav>
+  </div>
+
+  <div id="context-sheet">
+    <div class="sheet-content">
+      <i class="ti ti-x sheet-close" onclick="ui_closeSheet()"></i>
+      <h3 style="margin-bottom:16px">Session Context</h3>
+      <p style="margin-bottom:8px" id="sheet-mood"></p>
+      <p style="margin-bottom:8px" id="sheet-exam"></p>
+      <p style="color:var(--kivi-text-muted); font-size:14px" id="sheet-note"></p>
+    </div>
+  </div>
+
+  <script>
+    // --- STATE ---
+    const GEMINI_API_KEY = 'YOUR_KEY_HERE';
+    const state = {
+      profile: null,
+      sessions: [],
+      currentSession: null,
+      activeTab: 'checkin',
+      graphDrawn: false,
+      unreadKivi: false,
+      obStep: 1,
+      moodLabels: { 1: 'Terrible', 2: 'Low', 3: 'Okay', 4: 'Good', 5: 'Great' },
+      moodEmojis: { 1: '😔', 2: '😟', 3: '😐', 4: '🙂', 5: '😊' }
+    };
+
+    // --- STORAGE ---
+    function store_load() {
+      try {
+        const data = localStorage.getItem('kivi_data');
+        if (data) {
+          const parsed = JSON.parse(data);
+          state.profile = parsed.profile || null;
+          state.sessions = parsed.sessions || [];
+        }
+      } catch (e) { console.error("Load failed", e); }
+    }
+
+    function store_save() {
+      try {
+        localStorage.setItem('kivi_data', JSON.stringify({ profile: state.profile, sessions: state.sessions }));
+      } catch (e) {
+        if (e.name === 'QuotaExceededError') alert("Kivi memory full. Older sessions may need clearing.");
+      }
+    }
+
+    function store_addSession(session) {
+      state.sessions.push(session);
+      store_save();
+    }
+
+    function store_updateSession(id, msgObj) {
+      const s = state.sessions.find(x => x.id === id);
+      if (s) { s.messages.push(msgObj); store_save(); }
+    }
+
+    // --- UI-SCREENS ---
+    function ui_switchTab(tab) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(`screen-${tab}`).classList.add('active');
+      document.querySelectorAll('.nav-btn').forEach(b => {
+        b.classList.remove('active');
+        b.removeAttribute('aria-current');
+      });
+      const btn = document.querySelector(`.nav-btn[data-tab="${tab}"]`);
+      btn.classList.add('active');
+      btn.setAttribute('aria-current', 'page');
+
+      if (tab === 'chat') { state.unreadKivi = false; ui_updateChatDot(); }
+      if (tab === 'timeline') { ui_renderTimeline(); }
+      state.activeTab = tab;
+    }
+
+    function ui_setGreeting() {
+      const hr = new Date().getHours();
+      let gr = hr < 11 ? "Good morning" : hr < 17 ? "Good afternoon" : hr < 21 ? "Good evening" : "Still up?";
+      const nm = state.profile?.name ? ` ${state.profile.name}` : "";
+      document.getElementById('greeting').textContent = `${gr}${nm}`;
+    }
+
+    // --- UI-CHECKIN ---
+    function ui_selectMood(val) {
+      document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
+      const btn = document.querySelector(`.mood-btn[data-val="${val}"]`);
+      btn.classList.add('selected');
+      btn.classList.remove('anim-burst');
+      void btn.offsetWidth; // trigger reflow
+      btn.classList.add('anim-burst');
+
+      document.getElementById('mood-label').textContent = `Feeling ${state.moodLabels[val]}`;
+      document.getElementById('checkin-bg').style.backgroundColor = `color-mix(in srgb, var(--mood-${val}) 8%, transparent)`;
+      ui_updateSummonBtn();
+    }
+
+    function ui_selectExam(val) {
+      document.querySelectorAll('#checkin-exams .exam-chip').forEach(c => {
+        c.classList.remove('selected');
+        c.setAttribute('aria-checked', 'false');
+      });
+      const chip = document.querySelector(`#checkin-exams .exam-chip[data-val="${val}"]`);
+      if (chip) {
+        chip.classList.add('selected');
+        chip.setAttribute('aria-checked', 'true');
+      }
+      ui_updateSummonBtn();
+    }
+
+    function ui_updateSummonBtn() {
+      const mood = document.querySelector('.mood-btn.selected');
+      const exam = document.querySelector('#checkin-exams .exam-chip.selected');
+      document.getElementById('summon-btn').disabled = !(mood && exam);
+    }
+
+    function ui_summonKivi() {
+      const moodVal = parseInt(document.querySelector('.mood-btn.selected').dataset.val);
+      const exam = document.querySelector('#checkin-exams .exam-chip.selected').dataset.val;
+      const note = document.getElementById('checkin-note').value.trim();
+
+      const newSession = {
+        id: Date.now().toString(), timestamp: Date.now(),
+        mood: moodVal, moodLabel: state.moodLabels[moodVal],
+        exam: exam, note: note, messages: []
+      };
+      state.currentSession = newSession;
+      store_addSession(newSession);
+      state.graphDrawn = false; // invalidate cache
+
+      document.getElementById('pill-emoji').textContent = state.moodEmojis[moodVal];
+      document.getElementById('pill-exam').textContent = exam;
+
+      document.getElementById('chat-log').innerHTML = '';
+      ui_clearQuickReplies();
+      ui_switchTab('chat');
+      api_sendOpening();
+    }
+
+    // --- UI-CHAT ---
+    function ui_appendBubble(role, text) {
+      const wrap = document.createElement('div');
+      wrap.className = `bubble-wrap anim-slide-up ${role === 'model' ? 'kivi' : 'user'}`;
+      const bub = document.createElement('div');
+      bub.className = 'bubble';
+      bub.textContent = text;
+      const time = document.createElement('div');
+      time.className = 'bubble-time';
+      time.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      wrap.appendChild(bub);
+      wrap.appendChild(time);
+      document.getElementById('chat-log').appendChild(wrap);
+      ui_scrollToBottom();
+    }
+
+    function ui_showTyping() {
+      const wrap = document.createElement('div');
+      wrap.id = 'typing-indicator';
+      wrap.className = 'bubble-wrap kivi anim-slide-up';
+      wrap.innerHTML = `<div class="bubble typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`;
+      document.getElementById('chat-log').appendChild(wrap);
+      ui_scrollToBottom();
+      document.getElementById('chat-log').setAttribute('aria-busy', 'true');
+    }
+
+    function ui_hideTyping() {
+      const ind = document.getElementById('typing-indicator');
+      if (ind) ind.remove();
+      document.getElementById('chat-log').setAttribute('aria-busy', 'false');
+    }
+
+    function ui_renderQuickReplies(mood) {
+      const qr = document.getElementById('quick-replies');
+      qr.innerHTML = '';
+      let opts = [];
+      if (mood <= 2) opts = ["I bombed my mock test", "I want to quit", "Help me breathe"];
+      else if (mood === 3) opts = ["I'm falling behind", "Help me focus today", "I need motivation"];
+      else opts = ["How do I stay consistent?", "Dealing with pressure", "I feel good today"];
+
+      opts.forEach((txt, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'qr-chip';
+        btn.textContent = txt;
+        btn.style.animationDelay = `${i * 40}ms`;
+        btn.onclick = () => { ui_clearQuickReplies(); ui_triggerSend(txt); };
+        qr.appendChild(btn);
+      });
+    }
+
+    function ui_clearQuickReplies() { document.getElementById('quick-replies').innerHTML = ''; }
+    function ui_scrollToBottom() { requestAnimationFrame(() => { const l = document.getElementById('chat-log'); l.scrollTop = l.scrollHeight; }); }
+    function ui_updateChatDot() { document.getElementById('chat-dot').classList.toggle('visible', state.unreadKivi && state.activeTab !== 'chat'); }
+
+    // --- UI-TIMELINE ---
+    function ui_renderTimeline() {
+      if (!state.sessions.length) return;
+      if (!state.graphDrawn) {
+        ui_drawGraph(state.sessions);
+        ui_renderStatCards(state.sessions);
+        ui_renderHistory(state.sessions);
+        state.graphDrawn = true;
+      }
+      const svg = document.getElementById('mood-graph');
+      svg.classList.remove('graph-drawn');
+      void svg.offsetWidth;
+      const observer = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting) {
+          svg.classList.add('graph-drawn');
+          observer.disconnect();
+        }
+      });
+      observer.observe(svg);
+    }
+
+    function ui_drawGraph(sessions) {
+      const now = Date.now();
+      const days14 = Array.from({ length: 14 }, (_, i) => {
+        const d = new Date(now - (13 - i) * 86400000);
+        return { dateStr: d.toDateString(), day: d.getDate(), pts: [] };
+      });
+      sessions.forEach(s => {
+        const ds = new Date(s.timestamp).toDateString();
+        const b = days14.find(x => x.dateStr === ds);
+        if (b) b.pts.push(s);
+      });
+
+      let pathD = "", pointsHTML = "";
+      const w = document.getElementById('mood-graph').clientWidth || 343;
+      const h = 140, dx = w / 13;
+      let prevX = null, prevY = null;
+
+      days14.forEach((b, i) => {
+        const x = i * dx;
+        pointsHTML += `<text x="${x}" y="170" text-anchor="middle" class="graph-axis-text">${b.day}</text>`;
+        if (!b.pts.length) { prevX = null; return; }
+        const avgM = b.pts.reduce((sum, p) => sum + p.mood, 0) / b.pts.length;
+        const y = h - ((avgM - 1) / 4) * (h - 20) - 10;
+
+        if (prevX === null) pathD += `M ${x} ${y} `;
+        else {
+          const cpX1 = prevX + (x - prevX) / 2, cpX2 = x - (x - prevX) / 2;
+          pathD += `C ${cpX1} ${prevY}, ${cpX2} ${y}, ${x} ${y} `;
+        }
+        prevX = x; prevY = y;
+        const mCol = `var(--mood-${Math.round(avgM)})`;
+        const tooltipData = `Date: ${b.dateStr}&#10;Exams: ${[...new Set(b.pts.map(p => p.exam))].join(', ')}&#10;Avg Mood: ${avgM.toFixed(1)}/5`;
+        pointsHTML += `<circle cx="${x}" cy="${y}" r="5" fill="${mCol}" class="data-point" onclick="ui_showTooltip(event, '${tooltipData}')" />`;
+      });
+
+      const pathEl = `<path d="${pathD}" class="graph-path" id="graph-path-el" />`;
+      let fillD = pathD;
+      if (prevX !== null) {
+        const firstM = pathD.match(/M ([\d.]+) ([\d.]+)/);
+        if (firstM) fillD += ` L ${prevX} ${h} L ${firstM[1]} ${h} Z`;
+      }
+      const fillEl = `<path d="${fillD}" fill="url(#grad)" class="graph-fill" />`;
+      const defs = `<defs><linearGradient id="grad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--mood-5)" stop-opacity="0.4"/><stop offset="100%" stop-color="var(--mood-5)" stop-opacity="0"/></linearGradient></defs>`;
+
+      document.getElementById('mood-graph').innerHTML = defs + fillEl + pathEl + pointsHTML;
+      setTimeout(() => {
+        const p = document.getElementById('graph-path-el');
+        if (p) p.style.setProperty('--path-length', p.getTotalLength());
+      }, 50);
+    }
+
+    function ui_renderStatCards(sessions) {
+      const s7 = sessions.filter(s => s.timestamp > Date.now() - 7 * 86400000);
+      const avg = s7.length ? (s7.reduce((a, b) => a + b.mood, 0) / s7.length).toFixed(1) : '-';
+      const best = s7.length ? s7.reduce((a, b) => a.mood > b.mood ? a : b) : null;
+      document.getElementById('stats-row').innerHTML = `
+        <div class="stat-card"><div class="stat-val">${avg} <span style="font-size:16px">⭐</span></div><div class="stat-label">7-day avg</div></div>
+        <div class="stat-card"><div class="stat-val">${best ? state.moodEmojis[best.mood] : '-'}</div><div class="stat-label">Best mood</div></div>
+        <div class="stat-card"><div class="stat-val">${sessions.length}</div><div class="stat-label">Total Check-ins</div></div>
+      `;
+    }
+
+    function ui_renderHistory(sessions) {
+      const hl = document.getElementById('history-list');
+      hl.innerHTML = '';
+      [...sessions].reverse().forEach(s => {
+        const d = new Date(s.timestamp).toLocaleDateString();
+        const kiviMsg = s.messages.find(m => m.role === 'model')?.content || "No reply";
+        hl.innerHTML += `
+          <div class="history-card" aria-expanded="false" onclick="this.setAttribute('aria-expanded', this.getAttribute('aria-expanded')==='true'?'false':'true')">
+            <div class="history-head"><span class="hist-date">${d}</span><span class="hist-chip">${s.exam}</span></div>
+            <div class="hist-main"><span class="hist-emoji">${state.moodEmojis[s.mood]}</span><span class="hist-preview">${s.note || 'No note'}</span></div>
+            <div class="hist-full"><b>Note:</b> ${s.note || 'None'}<div class="hist-kivi"><b>Kivi:</b> ${kiviMsg}</div></div>
+          </div>
+        `;
+      });
+    }
+
+    // --- API ---
+    function api_buildSystemPrompt() {
+      const recent = state.sessions.slice(-5);
+      const avg = recent.length ? (recent.reduce((a, b) => a + b.mood, 0) / recent.length).toFixed(1) : 0;
+      let trend = "just getting started";
+      if (recent.length >= 2) trend = recent[recent.length - 1].mood > recent[0].mood ? "improving" : "declining";
+
+      let histTxt = recent.map(s => `${new Date(s.timestamp).toLocaleDateString()} - Mood ${s.mood}/5 - ${s.exam} - ${s.note?.substring(0, 80) || 'no note'}`).join('\n');
+      const cur = state.currentSession;
+
+      return `You are Kivi, a warm and emotionally intelligent mental wellness companion for Indian students preparing for competitive exams.
+STUDENT HISTORY:\n${histTxt}\nMood trend is ${trend}, average mood is ${avg}/5.
+TODAY:\nExam: ${cur.exam}\nMood: ${cur.moodLabel} (${cur.mood}/5)\nNote: ${cur.note}
+RULES: Remember their history and reference it naturally. Acknowledge today's mood first. Be warm, specific to their exam, and conversational — 3 to 5 sentences max. If mood has been 2 or below for 3+ consecutive sessions, gently suggest speaking to someone they trust. Never mention AI, Claude, Gemini, or memory system. You are Kivi, always.`;
+    }
+
+    async function api_call(isOpening = false) {
+      if (!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_KEY_HERE') {
+        setTimeout(() => ui_handleApiReply("Kivi needs a valid API key to talk. Please add it to kivi.html.", isOpening), 1000);
+        return;
+      }
+      try {
+        const sys = api_buildSystemPrompt();
+        const msgs = state.currentSession.messages.map(m => ({ role: m.role, parts: [{ text: m.content }] }));
+        const body = {
+          system_instruction: { parts: [{ text: sys }] },
+          contents: msgs.length ? msgs : [{ role: "user", parts: [{ text: "Hi Kivi" }] }],
+          generationConfig: { maxOutputTokens: 1024, temperature: 0.85, topP: 0.95 }
+        };
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+        });
+        if (res.status === 429) throw new Error("429");
+        const data = await res.json();
+        if (data.promptFeedback?.blockReason) throw new Error("Blocked");
+        const reply = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "Kivi couldn't connect right now. Try again in a moment.";
+        ui_handleApiReply(reply, isOpening);
+      } catch (e) {
+        let msg = "Kivi lost connection. Let's try again.";
+        if (e.message === "429") msg = "Kivi is a little overwhelmed right now. Try in a few seconds.";
+        if (e.message === "Blocked") msg = "Kivi needs a moment. Let's try rephrasing that.";
+        ui_handleApiReply(msg, isOpening);
+      }
+    }
+
+    function ui_handleApiReply(reply, isOpening) {
+      ui_hideTyping();
+      ui_appendBubble('model', reply);
+      store_updateSession(state.currentSession.id, { role: 'model', content: reply });
+      document.getElementById('chat-input').readOnly = false;
+      document.getElementById('send-btn').disabled = false;
+      if (isOpening) {
+        ui_renderQuickReplies(state.currentSession.mood);
+        if (state.activeTab !== 'chat') { state.unreadKivi = true; ui_updateChatDot(); }
+      }
+    }
+
+    function api_sendOpening() {
+      ui_showTyping();
+      api_call(true);
+    }
+
+    function ui_triggerSend(text) {
+      const val = text || document.getElementById('chat-input').value.trim();
+      if (!val) return;
+      document.getElementById('chat-input').value = '';
+      document.getElementById('chat-input').style.height = 'auto';
+      document.getElementById('chat-input').readOnly = true;
+      document.getElementById('send-btn').disabled = true;
+      ui_clearQuickReplies();
+      ui_appendBubble('user', val);
+      store_updateSession(state.currentSession.id, { role: 'user', content: val });
+      ui_showTyping();
+      api_call(false);
+    }
+
+    // --- EVENTS ---
+    document.querySelectorAll('.nav-btn').forEach(b => {
+      b.onclick = () => ui_switchTab(b.dataset.tab);
+    });
+
+    document.querySelectorAll('.mood-btn').forEach(b => {
+      b.onclick = () => ui_selectMood(b.dataset.val);
+    });
+
+    document.querySelectorAll('#checkin-exams .exam-chip').forEach(c => {
+      c.onclick = () => ui_selectExam(c.dataset.val);
+    });
+
+    document.getElementById('summon-btn').onclick = ui_summonKivi;
+
+    document.getElementById('send-btn').onclick = () => ui_triggerSend();
+    document.getElementById('chat-input').onkeydown = (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ui_triggerSend(); }
+    };
+
+    let resizeTimer;
+    document.getElementById('chat-input').oninput = function () {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+      }, 100);
+    };
+
+    document.getElementById('chat-context-pill').onclick = () => {
+      document.getElementById('sheet-mood').textContent = `Mood: ${state.currentSession.moodLabel}`;
+      document.getElementById('sheet-exam').textContent = `Exam: ${state.currentSession.exam}`;
+      document.getElementById('sheet-note').textContent = state.currentSession.note || 'No note provided.';
+      document.getElementById('context-sheet').classList.add('visible');
+    };
+    function ui_closeSheet() { document.getElementById('context-sheet').classList.remove('visible'); }
+
+    function ui_showTooltip(e, text) {
+      const tt = document.getElementById('graph-tooltip');
+      tt.innerHTML = text.replace(/\n/g, '<br>');
+      tt.style.left = e.clientX + 'px';
+      tt.style.top = (e.clientY - 40) + 'px';
+      tt.classList.add('visible');
+      setTimeout(() => tt.classList.remove('visible'), 2500);
+    }
+
+    function ui_nextOnboarding() {
+      let valid = true;
+      if (state.obStep === 2) {
+        const val = document.getElementById('ob-name').value.trim();
+        if (!/^[a-zA-Z0-9 ]+$/.test(val)) valid = false;
+        else state.profile = { name: val };
+      }
+      if (valid) {
+        document.querySelector(`.ob-step[data-step="${state.obStep}"]`).classList.remove('active');
+        state.obStep++;
+        document.querySelector(`.ob-step[data-step="${state.obStep}"]`).classList.add('active');
+        document.querySelectorAll('.ob-dot').forEach((d, i) => d.classList.toggle('active', i === state.obStep - 1));
+      }
+    }
+
+    function ui_finishOnboarding(skip = false) {
+      if (!skip && state.obStep === 3) {
+        const chip = document.querySelector('#ob-exams .exam-chip.selected');
+        if (chip) state.profile = { ...state.profile, primaryExam: chip.dataset.val };
+      }
+      store_save();
+      document.getElementById('onboarding').hidden = true;
+      document.getElementById('app').hidden = false;
+      ui_setGreeting();
+    }
+
+    // --- INIT ---
+    store_load();
+    if (!GEMINI_API_KEY || GEMINI_API_KEY === 'AQ.Ab8RN6IZTvSioNjAAICN6dPwF8gdCasjy_jl4kv2dnvHgKV2sA') document.getElementById('setup-banner').hidden = false;
+
+    // setup ob chips
+    const exams = ['JEE', 'NEET', 'UPSC', 'CAT', 'GATE', 'CUET', 'Board exams'];
+    const obE = document.getElementById('ob-exams');
+    exams.forEach(e => {
+      const c = document.createElement('button');
+      c.className = 'exam-chip'; c.dataset.val = e; c.textContent = e;
+      c.onclick = () => { obE.querySelectorAll('.exam-chip').forEach(x => x.classList.remove('selected')); c.classList.add('selected'); };
+      obE.appendChild(c);
+    });
+
+    if (!state.profile) {
+      document.getElementById('onboarding').hidden = false;
+    } else {
+      document.getElementById('app').hidden = false;
+      ui_setGreeting();
+    }
+  </script>
+</body>
+
+</html>
