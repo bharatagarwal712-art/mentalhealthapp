@@ -1183,6 +1183,20 @@
       } catch (e) {
         // Ignore
       }
+
+      // Try to load from Vercel Serverless Function /api/config
+      try {
+        const res = await fetch('/api/config', { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.GEMINI_API_KEY) {
+            GEMINI_API_KEY = data.GEMINI_API_KEY.trim();
+            return GEMINI_API_KEY;
+          }
+        }
+      } catch (e) {
+        // Ignore
+      }
       return '';
     }
     const apiKeyPromise = config_loadApiKey();

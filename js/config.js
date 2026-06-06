@@ -25,10 +25,25 @@ async function config_loadApiKey() {
       }
     }
   } catch (e) {
+    // Ignore and proceed
+  }
+
+  // 2. Try to load from Vercel Serverless Function /api/config
+  try {
+    const res = await fetch('/api/config', { cache: 'no-store' });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.GEMINI_API_KEY) {
+        GEMINI_API_KEY = data.GEMINI_API_KEY.trim();
+        console.log("Loaded API key from Vercel API");
+        return GEMINI_API_KEY;
+      }
+    }
+  } catch (e) {
     // Ignore and proceed to localStorage fallback
   }
 
-  // 2. Try to load from localStorage
+  // 3. Try to load from localStorage
   if (typeof localStorage !== 'undefined') {
     const _encryptedKey = localStorage.getItem('kivi_api_key');
     if (_encryptedKey && typeof decryptData === 'function') {
